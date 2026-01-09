@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tax Deal Simulator: Deal Tax Risk Simulator Edition</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#121a27;
+      --muted:#93a4c7;
+      --text:#e9eefc;
+      --accent:#7dd3fc;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --good:#34d399;
+      --line:#22304a;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 20% 10%, #16223a 0%, var(--bg) 55%),
+                  radial-gradient(900px 650px at 85% 25%, #1a2f2a 0%, var(--bg) 55%);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{width:min(1000px, 100%);}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .inner{padding:18px;}
+    .sub{color:var(--muted); font-size:13px; line-height:1.35}
+    .btn{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:12px;
+    }
+    .btn:hover{border-color: rgba(125,211,252,.45);}
+    .btn.primary{
+      border-color: rgba(52,211,153,.45);
+      background: rgba(52,211,153,.10);
+    }
+    .btn.danger{
+      border-color: rgba(251,113,133,.55);
+      background: rgba(251,113,133,.10);
+    }
+    .footerRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+    .small{color:var(--muted); font-size:12px; line-height:1.4; margin-top:10px;}
+    code.inline{font-family:var(--mono); font-size:11.5px; background:rgba(255,255,255,.06); padding:2px 6px; border-radius:8px; border:1px solid rgba(255,255,255,.10);}
+
+    /* Splash */
+    #splash .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+    @media (max-width: 860px){ #splash .grid2{grid-template-columns:1fr;} }
+    .splashHeader{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; border-bottom:1px solid rgba(255,255,255,.06); padding-bottom:12px; margin-bottom:12px;}
+    .review{
+      padding:14px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background: rgba(0,0,0,.16);
+      line-height:1.5;
+      font-size:13px;
+      color:#dbe5ff;
+    }
+    .scoreBox{
+      padding:14px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background: rgba(0,0,0,.16);
+    }
+    .scoreBox .desc{color:var(--muted); font-size:12px; line-height:1.4;}
+    .splashNote{margin-top:12px; color:var(--muted); font-size:12px;}
+
+    /* Game UI */
+    header{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom:18px;
+    }
+    .title{display:flex; flex-direction:column; gap:6px;}
+    h1{margin:0; font-size:22px; letter-spacing:.2px}
+    .pillrow{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex; gap:7px; align-items:center;
+      box-shadow: 0 6px 18px rgba(0,0,0,.25);
+      user-select:none;
+    }
+    .dot{width:8px; height:8px; border-radius:99px; background:var(--accent);}
+    main{
+      display:grid;
+      grid-template-columns: 1.6fr .9fr;
+      gap:16px;
+    }
+    @media (max-width: 860px){ main{grid-template-columns:1fr;} .pillrow{justify-content:flex-start;} }
+    .sceneTitle{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      padding-bottom:12px; margin-bottom:12px;
+    }
+    .sceneTitle h2{margin:0; font-size:16px}
+    .tag{
+      font-family:var(--mono);
+      font-size:11px;
+      color:#b6c5ef;
+      border:1px solid rgba(125,211,252,.25);
+      background: rgba(125,211,252,.08);
+      padding:5px 8px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .story{color:#dbe5ff; line-height:1.55; font-size:14px;}
+    .choices{display:grid; gap:10px; margin-top:14px;}
+    button.choice{
+      text-align:left;
+      width:100%;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color:var(--text);
+      border-radius:14px;
+      padding:12px 12px;
+      cursor:pointer;
+      transition: transform .05s ease, border-color .15s ease, background .15s ease;
+      display:flex; gap:12px; align-items:flex-start;
+    }
+    button.choice:hover{border-color: rgba(125,211,252,.45); background: rgba(125,211,252,.10);}
+    button.choice:active{transform: translateY(1px);}
+    .kbd{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:5px 7px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.14);
+      color:#cfe1ff;
+      background: rgba(255,255,255,.05);
+      min-width:30px;
+      text-align:center;
+      margin-top:1px;
+    }
+    .choiceText{display:flex; flex-direction:column; gap:4px;}
+    .choiceText .top{font-weight:650; font-size:13px}
+    .choiceText .bot{color:var(--muted); font-size:12px; line-height:1.35}
+    .asideTop{
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      padding-bottom:12px; margin-bottom:12px;
+    }
+    .asideTop h3{margin:0; font-size:14px}
+    .meters{display:grid; gap:12px;}
+    .meter{
+      padding:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius:14px;
+    }
+    .mhead{display:flex; justify-content:space-between; gap:10px; align-items:baseline;}
+    .mhead .label{color:#cfe1ff; font-weight:650; font-size:12px}
+    .mhead .val{font-family:var(--mono); font-size:12px; color:#cfe1ff}
+    .bar{
+      height:10px; border-radius:999px;
+      background: rgba(255,255,255,.08);
+      overflow:hidden; margin-top:10px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .fill{height:100%; width:0%; border-radius:999px; transition: width .35s ease;}
+    .log{
+      margin-top:12px;
+      padding:12px;
+      border:1px dashed rgba(255,255,255,.12);
+      border-radius:14px;
+      background: rgba(0,0,0,.12);
+    }
+    .logTitle{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+    .logTitle b{font-size:12px}
+    .logTitle span{color:var(--muted); font-size:11px}
+    .entries{margin-top:8px; display:grid; gap:8px; max-height:280px; overflow:auto; padding-right:4px;}
+    .entry{
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      border-radius:12px;
+      padding:10px;
+      font-size:12px;
+      line-height:1.35;
+      color:#dbe5ff;
+    }
+    .entry .meta{color:var(--muted); font-family:var(--mono); font-size:11px; margin-bottom:4px}
+
+    /* Final modal */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background: rgba(0,0,0,.6); padding:20px;}
+    .modal.show{display:flex;}
+    .modalCard{width:min(840px, 100%); border-radius:18px; border:1px solid rgba(255,255,255,.14); background: linear-gradient(180deg, rgba(18,26,39,.98), rgba(12,16,24,.98)); box-shadow: var(--shadow); overflow:hidden;}
+    .modalHeader{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; border-bottom:1px solid rgba(255,255,255,.06); padding-bottom:12px; margin-bottom:12px;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+    @media (max-width: 860px){ .grid2{grid-template-columns:1fr;} }
+    .scoreBox .big{font-family:var(--mono); font-size:28px; font-weight:800; letter-spacing:.3px; margin:6px 0 6px;}
+  </style>
+</head>
+
+<body>
+  <div id="debugPanel" style="display:none; position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:rgba(0,0,0,.85); border:1px solid rgba(255,255,255,.15); color:#fff; padding:10px 12px; border-radius:12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:12px; max-height:40vh; overflow:auto;">
+    <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+      <b>Debug</b>
+      <button id="dbgClose" style="background:transparent; border:1px solid rgba(255,255,255,.2); color:#fff; border-radius:10px; padding:4px 8px; cursor:pointer;">Close</button>
+    </div>
+    <div id="dbgMsg" style="margin-top:8px; white-space:pre-wrap;"></div>
+  </div>
+
+  <!-- SPLASH -->
+  <div id="splash" class="wrap">
+    <div class="card">
+      <div class="inner">
+        <div class="splashHeader">
+          <div>
+            <h2 style="margin:0; font-size:16px;">Tax Deal Simulator: <span style="color:var(--accent)">Deal Tax Risk Simulator</span></h2>
+            <div class="sub" style="margin-top:6px;">An interactive M&A tax decision simulator focused on risk allocation and value drivers.</div>
+          </div>
+          <button class="btn" id="btnStartSkip" type="button" title="Start immediately">Skip</button>
+        </div>
+
+        <div class="grid2">
+          <div class="review">
+            <b>Scenario</b><br>
+            You’re the junior tax associate on <span style="color:#cfe1ff;"><b>CLS Tax</b></span>.
+            You’ll make deal choices (structure, reps, disclosure, indemnity/insurance, price mechanics, financing constraints, covenants, closing deliverables).
+            Each choice changes <b>Value</b> and <b>Risk</b>.<br><br>
+            <b>Goal</b><br>
+            Create value for the client while keeping tax risk controlled. Your “partner review” score reflects the tradeoff.
+          </div>
+
+          <div class="scoreBox">
+            <div style="color:var(--muted); font-size:12px;">How to play</div>
+            <div class="desc" style="margin-top:10px;">
+              <ul style="margin:0 0 0 18px; padding:0; color:#dbe5ff; font-size:12.5px; line-height:1.55;">
+                <li>Read the prompt, then choose an option.</li>
+                <li>Use keys <b>1–4</b> (or click the buttons) to select.</li>
+                <li>Press <b>U</b> (or click <b>Undo</b>) to take back the last choice.</li>
+                <li>Finish all stages to maximize the completion bonus.</li>
+              </ul>
+              <div class="splashNote">Tip: Use <b>Reset</b> to replay alternative strategies and compare outcomes.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footerRow">
+          <button class="btn primary" id="btnStart" type="button">Start the deal</button>
+        </div>
+
+        <div class="small">Disclaimer: This is an educational simulation, not legal or tax advice.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME APP -->
+  <div id="app" class="wrap" style="display:none;">
+    <header>
+      <div class="title">
+        <h1>Tax Deal Simulator <span style="color:var(--accent)">Deal Tax Risk Simulator</span></h1>
+        <div class="sub">You’re the junior tax associate. Optimize deal value while managing tax risk and documentation discipline.</div>
+      </div>
+      <div class="pillrow">
+        <div class="pill"><span class="dot" style="background:var(--good)"></span><span>Value</span><b id="pillValue" style="color:var(--text); margin-left:4px; font-family:var(--mono)">0</b></div>
+        <div class="pill"><span class="dot" style="background:var(--warn)"></span><span>Risk</span><b id="pillRisk" style="color:var(--text); margin-left:4px; font-family:var(--mono)">0</b></div>
+        <div class="pill"><span class="dot" style="background:var(--accent)"></span><span>Progress</span><b id="pillStep" style="color:var(--text); margin-left:4px; font-family:var(--mono)">0/0</b></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-live="polite">
+        <div class="inner">
+          <div class="sceneTitle">
+            <h2 id="sceneH">—</h2>
+            <span class="tag" id="sceneTag">—</span>
+          </div>
+          <div class="story" id="sceneBody"></div>
+          <div class="choices" id="choices"></div>
+
+          <div class="footerRow">
+            <button class="btn" id="btnBack" type="button" title="Undo last choice">Undo</button>
+            <button class="btn primary" id="btnFinish" type="button" title="Finish early">Finish</button>
+            <button class="btn danger" id="btnReset" type="button" title="Start over">Reset</button>
+          </div>
+          <div class="small">
+            Keyboard: <code class="inline">1</code>–<code class="inline">4</code> to choose • <code class="inline">U</code> to undo • <code class="inline">Esc</code> closes the results screen
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="inner">
+          <div class="asideTop">
+            <h3>Deal Dashboard</h3>
+            <span style="color:var(--muted); font-size:12px" id="dealName"></span>
+          </div>
+
+          <div class="meters">
+            <div class="meter">
+              <div class="mhead">
+                <div class="label">Deal Value Created</div>
+                <div class="val"><span id="valueNum">0</span> pts</div>
+              </div>
+              <div class="bar"><div class="fill" id="valueFill" style="background: linear-gradient(90deg, rgba(52,211,153,.25), rgba(52,211,153,.95));"></div></div>
+              <div class="small" id="valueNote"></div>
+            </div>
+
+            <div class="meter">
+              <div class="mhead">
+                <div class="label">Tax Risk Exposure</div>
+                <div class="val"><span id="riskNum">0</span> pts</div>
+              </div>
+              <div class="bar"><div class="fill" id="riskFill" style="background: linear-gradient(90deg, rgba(251,191,36,.25), rgba(251,113,133,.95));"></div></div>
+              <div class="small" id="riskNote"></div>
+            </div>
+          </div>
+
+          <div class="log">
+            <div class="logTitle">
+              <b>Decision Log</b>
+              <span id="snarkMeter">status: baseline</span>
+            </div>
+            <div class="entries" id="entries"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- FINAL RESULTS MODAL -->
+  <div class="modal" id="modal">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="finalTitle">
+      <div class="inner">
+        <div class="modalHeader">
+          <div>
+            <h2 id="finalTitle" style="margin:0; font-size:16px;">Partner Review</h2>
+            <div class="sub" id="finalSub">—</div>
+          </div>
+          <button class="btn" id="btnClose" type="button">Close</button>
+        </div>
+
+        <div class="grid2">
+          <div class="scoreBox">
+            <div style="color:var(--muted); font-size:12px;">Final Score</div>
+            <div class="big" id="finalScore">0/100</div>
+            <div class="desc" id="finalDesc">—</div>
+            <div class="small" id="finalBreakdown"></div>
+          </div>
+
+          <div class="review" id="finalReview"></div>
+        </div>
+
+        <div class="footerRow" style="margin-top:14px;">
+          <button class="btn primary" id="btnCopy" type="button">Copy summary</button>
+          <button class="btn danger" id="btnRestart" type="button">Play again</button>
+        </div>
+
+        <div class="small" id="copyNote" style="display:none; margin-top:10px;">Copied to clipboard.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // If something goes wrong, show it plainly.
+    window.addEventListener("error", (e) => {
+      console.error("Game error:", e.error || e.message);
+      alert("Game error: " + (e.message || "Unknown error") + "\\n\\nOpen DevTools Console for details.");
+    });
+
+    const DEAL = {
+      name: "CLS Tax",
+      client: "BuyerCo, a private equity–backed buyer",
+      target: "TargetCo",
+      targetDesc: "a founder-owned business",
+      price: "a headline purchase price of $400 million",
+    };
+
+    function startGame(){
+      console.log('Start clicked');
+      const splash = document.getElementById("splash");
+      const app = document.getElementById("app");
+      if (splash) splash.style.display = "none";
+      if (app) app.style.display = "block";
+      renderScene();
+    }
+
+    // Bind start buttons without optional chaining (maximum compatibility)
+    document.addEventListener("DOMContentLoaded", () => {
+      const b1 = document.getElementById("btnStart");
+      const b2 = document.getElementById("btnStartSkip");
+      if (!b1 || !b2){
+        showDebug("Start buttons not found in DOM. This usually means the deployed file is not the latest version or HTML was altered during upload.");
+        return;
+      }
+      b1.addEventListener("click", startGame);
+      b2.addEventListener("click", startGame);
+    });
+
+    const scenes = [
+      {
+        id: "S1",
+        title: "Structure at 30,000 Feet",
+        tag: "Asset vs Stock",
+        body: `Your client is evaluating the acquisition of <b>${DEAL.target}</b>, ${DEAL.targetDesc}. The seller seeks a clean exit, while the buyer is focused on tax efficiency and minimizing deal-specific exceptions.<br><br>
+              What structure do you recommend as the opening position?`,
+        choices: [
+          { text:"Push for an asset deal to get a step-up in basis.", sub:"More depreciation/amortization value, but seller may resist.", delta:{value:+18,risk:+3}, note:"You chase the step-up. Seller signals resistance; negotiate economics and process.", concept:"Asset purchase often gives buyer basis step-up; negotiation friction increases."},
+          { text:"Start with a stock deal for simplicity; focus on reps and indemnity to manage risk.", sub:"Cleaner for seller; buyer needs protections for hidden tax exposure.", delta:{value:+8,risk:-2}, note:"Simple structure, but now you’re paying for the target’s past decisions. Historic exposures transfer unless addressed by protections.", concept:"Stock deals can preserve seller tax outcomes but bring historic liabilities."},
+          { text:"Propose stock deal + step-up election concept (facts permitting).", sub:"Hybrid pitch: step-up benefits with stock mechanics (eligibility matters).", delta:{value:+16,risk:+6}, note:"You suggest a hybrid. Align the team on eligibility, required facts, and implementation steps.", concept:"Elections can recharacterize; complexity and eligibility drive risk."},
+        ]
+      },
+      {
+        id: "S2",
+        title: "Tax Reps: How Specific Is Specific?",
+        tag: "Representations",
+        body: `Drafting time. The business team says: “Just make it standard.” You translate that as: “Please prevent a career-limiting event.”<br><br>
+              Which approach do you take on tax representations?`,
+        choices: [
+          { text:"Broad rep: 'All taxes have been timely filed and paid,' minimal detail.", sub:"Fast, but creates interpretation fights and misses deal-specific issues.", delta:{value:+4,risk:+10}, note:"Broad reps are like umbrellas: comforting until the wind shows up.", concept:"Overbroad/vague reps can increase disputes and reduce diligence signal."},
+          { text:"Targeted reps tied to known hot spots (withholding, nexus, audits, etc.).", sub:"More work now; fewer surprises later.", delta:{value:+10,risk:-2}, note:"You add specificity. The partner smiles once. Document it for your memoir.", concept:"Tailored reps allocate risk to identified exposures and improve enforceability."},
+          { text:"Targeted reps + bring-down condition; qualifiers only where justified.", sub:"Balances realism with enforceability.", delta:{value:+12,risk:-4}, note:"You resist the ‘knowledge-ify everything’ impulse. Your future self says thank you.", concept:"Bring-down and careful qualifiers can preserve value without gutting protection."},
+        ]
+      },
+      {
+        id: "S3",
+        title: "Disclosure Schedules: The Tax Closet",
+        tag: "Diligence + Disclosures",
+        body: `Seller sends disclosure schedules at 11:58 PM. It is lengthy and incomplete, with several placeholders and gaps.<br><br>
+              What do you do?`,
+        choices: [
+          { text:"Accept schedules as-is to keep momentum. “We can fight about it later.”", sub:"Momentum is real. So is post-closing litigation.", delta:{value:+6,risk:+12}, note:"You keep momentum. Risk visibility increases; unresolved items should be escalated.", concept:"Weak disclosures raise post-closing tax exposure and dispute probability."},
+          { text:"Kick back schedules; require itemization of audits, elections, uncertain positions, tax sharing.", sub:"Slower now, safer later.", delta:{value:+8,risk:-5}, note:"You push back. Seller calls it ‘overly burdensome.’ You call it ‘standard practice.’", concept:"Better disclosure improves risk pricing and negotiation leverage."},
+          { text:"Triaged approach: accept minor items, hardline on audits/liens/NOLs/credits/tax sharing.", sub:"Practical and defensible if the clock is real.", delta:{value:+10,risk:-2}, note:"You triage like a pro. Not every hill is worth dying on. Some are.", concept:"Risk-based diligence focuses resources on material exposures."},
+        ]
+      },
+      {
+        id: "S4",
+        title: "Indemnity Economics: Caps, Baskets, and Feelings",
+        tag: "Indemnification",
+        body: `Now we allocate risk in dollars. Seller prefers a low cap and broad qualifiers; Buyer prefers tailored tax protections.<br><br>
+              Choose your indemnity posture:`,
+        choices: [
+          { text:"Low cap (5%) + large basket; taxes treated like any other rep breach.", sub:"Seller-friendly; buyer carries more tail risk.", delta:{value:+6,risk:+10}, note:"You just moved risk onto your client. The client doesn’t know yet. They will.", concept:"Low cap/basket structures can leave tax exposure uninsured."},
+          { text:"Separate tax indemnity with higher cap (20%) and longer survival; carve-outs for pre-close taxes.", sub:"More protective for buyer; needs leverage.", delta:{value:+12,risk:-3}, note:"You ring-fence tax. Seller says ‘Why are you like this?’ You say ‘Because taxes.’", concept:"Tax-specific indemnities reflect distinct risk profile and timing."},
+          { text:"Tax indemnity + escrow sized to known issues; modest cap otherwise.", sub:"Optimized if you identified issues.", delta:{value:+14,risk:-5}, note:"Escrow is the deal equivalent of ‘show me you mean it.’", concept:"Escrows align incentives and fund expected exposures."},
+        ]
+      },
+      {
+        id: "S5",
+        title: "Tax Insurance: Buying Peace",
+        tag: "Tax Insurance",
+        body: `Someone suggests tax insurance. Another person says “insurance is expensive.” You do the math and model economic impacts.<br><br>
+              How do you deploy insurance (if at all)?`,
+        choices: [
+          { text:"No insurance. Rely on indemnity and general indemnities.", sub:"Cheaper now; could be expensive later.", delta:{value:+6,risk:+8}, note:"General language is harder to enforce and can increase dispute risk.", concept:"Skipping risk transfer increases residual exposure."},
+          { text:"Use insurance to backstop a specific identified risk.", sub:"Narrows disputes; can bridge negotiation gaps.", delta:{value:+12,risk:-4}, note:"You insure the known landmine. Everyone feels brave again.", concept:"Targeted insurance can replace contentious indemnity points."},
+          { text:"Propose broad coverage to reduce seller indemnity and speed signing.", sub:"May improve speed; underwriting can be intense.", delta:{value:+10,risk:-1}, note:"Underwriters ask for diligence like they’re grading you. Because they are.", concept:"Insurance can shift negotiation but adds process and exclusions."},
+        ]
+      },
+      {
+        id: "S6",
+        title: "Purchase Price Adjustment: Working Capital vs Tax",
+        tag: "Price Mechanics",
+        body: `Finance wants a working capital adjustment. You notice the definition quietly creates a tax trap if tax items are mishandled.<br><br>
+              What’s your move?`,
+        choices: [
+          { text:"Ignore it. ‘That’s finance’s thing.’", sub:"This commonly creates avoidable issues later.", delta:{value:+2,risk:+12}, note:"You ignore it. Later, it becomes your thing. This should be addressed pre-signing.", concept:"Price mechanics can shift tax benefits/burdens unintentionally."},
+          { text:"Tighten definitions: exclude income taxes from WC, address tax receivables/payables explicitly.", sub:"Cleaner allocation; fewer fights.", delta:{value:+12,risk:-3}, note:"You add clarity. The spreadsheet stops screaming in silence.", concept:"Explicit tax treatment prevents double counting and disputes."},
+          { text:"Add a tax true-up: allocate pre-close taxes to seller and post-close to buyer; coordinate covenants.", sub:"More drafting; aligns economics.", delta:{value:+14,risk:-2}, note:"A tax true-up is like flossing. Annoying now. Worth it later.", concept:"True-ups align intended tax/economic bargain."},
+        ]
+      },
+      {
+        id: "S7",
+        title: "Financing: Interest Deductions and Thin Ice",
+        tag: "Financing",
+        body: `The deal is leveraged. Great for returns, but there are limitations on interest deductibility and other financing-driven issues. The sponsor says “We’ll fix it in post.”<br><br>
+              Do you…`,
+        choices: [
+          { text:"Let it ride. “Post” is a magical land where problems solve themselves.", sub:"It is not.", delta:{value:+6,risk:+10}, note:"Post-closing remediation is costly and uncertain.", concept:"Ignoring financing constraints can reduce expected benefits and create risk."},
+          { text:"Flag constraints and add covenants: documentation, monitoring, coordination with accounting.", sub:"Practical risk management.", delta:{value:+10,risk:-2}, note:"You build guardrails. Guardrails are underrated until you need them.", concept:"Covenants/documentation can support intended tax treatment."},
+          { text:"Restructure: consider more equity/alternative instruments; disclose tradeoffs to client.", sub:"Less juice, more certainty.", delta:{value:+9,risk:-4}, note:"You trade a bit of juice for stability. You still do it.", concept:"Capital structure choices trade tax shield for certainty."},
+        ]
+      },
+      {
+        id: "S8",
+        title: "Signing vs Closing: Tax Covenants Under Pressure",
+        tag: "Covenants",
+        body: `There’s a gap between signing and closing. Seller wants flexibility. Buyer wants control. The law wants paperwork.<br><br>
+              Pick the covenant package:`,
+        choices: [
+          { text:"Light covenants: ordinary course; minimal tax restrictions.", sub:"Seller-friendly; risk of pre-close actions.", delta:{value:+6,risk:+8}, note:"You trust the seller. Trust is beautiful. Sometimes it’s also expensive.", concept:"Loose covenants may permit actions that shift tax burden post-close."},
+          { text:"Specific tax covenants: no elections/amended returns/settlements without consent; cooperate on filings; pre-close taxes to seller.", sub:"Stronger protection and clarity.", delta:{value:+12,risk:-3}, note:"You add consent rights. Seller says ‘why?’ You say ‘because humans.’", concept:"Tax covenants govern actions affecting allocation of liabilities/benefits."},
+          { text:"Specific covenants + info rights + pre-close tax contest procedure.", sub:"More pages, fewer meltdowns.", delta:{value:+14,risk:-5}, note:"You write a contest procedure. Future you sends past you flowers.", concept:"Contest procedures reduce dispute cost and clarify control."},
+        ]
+      },
+      {
+        id: "S9",
+        title: "The Last Mile: Closing Deliverables",
+        tag: "Opinions / Letters",
+        body: `Closing is tomorrow. Someone asks whether you can “just whip up” an opinion or rep letter. Time pressure increases; scope control is critical.<br><br>
+              What do you do?`,
+        choices: [
+          { text:"Give a mushy comfort letter with broad caveats. “We believe-ish.”", sub:"Low effort; low comfort.", delta:{value:+4,risk:+7}, note:"Overly general comfort language provides limited utility.", concept:"Weak opinions add little value and can create misaligned expectations."},
+          { text:"Narrow scope: define assumptions/facts/limitations; align with diligence and disclosures.", sub:"Professional and defensible.", delta:{value:+10,risk:-2}, note:"A scoped opinion aligned to facts is more defensible and useful.", concept:"Scope control ties opinions to facts and reduces overreach risk."},
+          { text:"Decline an opinion; deliver a tax memo + closing checklist of open issues.", sub:"Sometimes the best opinion is ‘no opinion.’", delta:{value:+9,risk:-1}, note:"A memo and checklist can be a practical deliverable under constraints.", concept:"A memo/checklist can be more useful than an overbroad opinion."},
+        ]
+      }
+    ];
+
+    // State
+    var idx = 0, value = 0, risk = 0;
+    var gameHistory = []; // {idx, choiceIndex, delta, note, concept}
+
+    // Elements (game UI only; they exist once app is shown)
+    var entriesEl = document.getElementById("entries");
+    var els = {
+      sceneH: document.getElementById("sceneH"),
+      sceneTag: document.getElementById("sceneTag"),
+      sceneBody: document.getElementById("sceneBody"),
+      choices: document.getElementById("choices"),
+      pillValue: document.getElementById("pillValue"),
+      pillRisk: document.getElementById("pillRisk"),
+      pillStep: document.getElementById("pillStep"),
+      valueNum: document.getElementById("valueNum"),
+      riskNum: document.getElementById("riskNum"),
+      valueFill: document.getElementById("valueFill"),
+      riskFill: document.getElementById("riskFill"),
+      valueNote: document.getElementById("valueNote"),
+      riskNote: document.getElementById("riskNote"),
+      snarkMeter: document.getElementById("snarkMeter"),
+      dealName: document.getElementById("dealName"),
+      btnBack: document.getElementById("btnBack"),
+      btnReset: document.getElementById("btnReset"),
+      btnFinish: document.getElementById("btnFinish"),
+      modal: document.getElementById("modal"),
+      btnClose: document.getElementById("btnClose"),
+      finalScore: document.getElementById("finalScore"),
+      finalDesc: document.getElementById("finalDesc"),
+      finalReview: document.getElementById("finalReview"),
+      finalSub: document.getElementById("finalSub"),
+      finalBreakdown: document.getElementById("finalBreakdown"),
+      btnRestart: document.getElementById("btnRestart"),
+      btnCopy: document.getElementById("btnCopy"),
+      copyNote: document.getElementById("copyNote"),
+    };
+    els.dealName.textContent = DEAL.name;
+
+    function clamp(n, lo, hi){ return Math.max(lo, Math.min(hi, n)); }
+    function sign(n){ return (n>=0? "+"+n : ""+n); }
+
+    function moodFromRisk(r){
+      if (r < 15) return "status: low risk posture";
+      if (r < 35) return "status: baseline";
+      if (r < 55) return "status: moderate risk posture";
+      if (r < 75) return "status: elevated risk posture";
+      return "status: high risk posture";
+    }
+    function valueNoteText(v){
+      if (v < 20) return "Limited value created; consider additional value levers.";
+      if (v < 45) return "Solid value creation. The spreadsheet is pleased.";
+      if (v < 70) return "Strong value. The partner almost calls you 'resourceful.'";
+      return "Dangerously competent. Keep it quiet.";
+    }
+    function riskNoteText(r){
+      if (r < 20) return "Low residual risk based on current selections.";
+      if (r < 45) return "Manageable risk. Risk appears manageable with current protections.";
+      if (r < 70) return "High risk. Consider additional controls (covenants, escrow, insurance) if facts warrant.";
+      return "High risk posture; reassess diligence, disclosures, and risk transfer tools.";
+    }
+
+    function renderMeters(){
+      els.pillValue.textContent = value;
+      els.pillRisk.textContent = risk;
+      els.pillStep.textContent = (idx+1) + "/" + scenes.length;
+
+      els.valueNum.textContent = value;
+      els.riskNum.textContent = risk;
+
+      var vPct = clamp(value, 0, 100);
+      var rPct = clamp(risk, 0, 100);
+      els.valueFill.style.width = vPct + "%";
+      els.riskFill.style.width = rPct + "%";
+
+      els.valueNote.textContent = valueNoteText(value);
+      els.riskNote.textContent = riskNoteText(risk);
+      els.snarkMeter.textContent = moodFromRisk(risk);
+
+      els.btnBack.disabled = (gameHistory.length === 0);
+    }
+
+    function addEntry(stepId, choiceText, note, delta, concept){
+      var div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML =
+        '<div class="meta">' + stepId + ' • Δ value ' + sign(delta.value) + ' • Δ risk ' + sign(delta.risk) + '</div>' +
+        '<div><b>' + choiceText + '</b></div>' +
+        '<div style="margin-top:6px; color:#cfe1ff">' + note + '</div>' +
+        '<div style="margin-top:6px; color: var(--muted)"><i>Concept:</i> ' + concept + '</div>';
+      entriesEl.prepend(div);
+    }
+
+    function renderScene(){
+      var s = scenes[idx];
+      els.sceneH.textContent = s.title;
+      els.sceneTag.textContent = s.tag;
+      els.sceneBody.innerHTML = s.body;
+      els.choices.innerHTML = "";
+
+      for (var i=0;i<s.choices.length;i++){
+        (function(i){
+          var c = s.choices[i];
+          var btn = document.createElement("button");
+          btn.className = "choice";
+          btn.type = "button";
+          btn.innerHTML =
+            '<div class="kbd">' + (i+1) + '</div>' +
+            '<div class="choiceText">' +
+              '<div class="top">' + c.text + '</div>' +
+              '<div class="bot">' + c.sub + '</div>' +
+            '</div>';
+          btn.addEventListener("click", function(){ pick(i); });
+          els.choices.appendChild(btn);
+        })(i);
+      }
+
+      renderMeters();
+    }
+
+    function pick(choiceIndex){
+      var s = scenes[idx];
+      var c = s.choices[choiceIndex];
+
+      value = clamp(value + c.delta.value, -50, 120);
+      risk = clamp(risk + c.delta.risk, 0, 120);
+
+      gameHistory.push({ idx: idx, choiceIndex: choiceIndex, delta: c.delta, note: c.note, concept: c.concept });
+
+      addEntry(s.id, c.text, c.note, c.delta, c.concept);
+
+      if (idx < scenes.length - 1){
+        idx += 1;
+        renderScene();
+      } else {
+        openFinal();
+      }
+    }
+
+    function undo(){
+      if (gameHistory.length === 0) return;
+      var last = gameHistory.pop();
+      value = clamp(value - last.delta.value, -50, 120);
+      risk = clamp(risk - last.delta.risk, 0, 120);
+      idx = last.idx;
+
+      if (entriesEl.firstChild) entriesEl.removeChild(entriesEl.firstChild);
+      renderScene();
+    }
+
+    function reset(){
+      idx = 0; value = 0; risk = 0;
+      gameHistory = [];
+      entriesEl.innerHTML = "";
+      closeModal();
+      renderScene();
+    }
+
+    function recommendations(){
+      var tips = [];
+      if (risk >= 60) tips.push("Tighten reps/disclosures and consider a tax-specific indemnity or targeted tax insurance.");
+      if (value < 35) tips.push("Look for value levers: step-up economics, clean price definitions, tax benefit allocation.");
+      if (risk >= 45 && value >= 55) tips.push("You’re value-forward. Add guardrails: covenants, contest procedure, escrow sizing to known issues.");
+      if (risk < 30 && value < 35) tips.push("You’re cautious but not creating enough value. Consider structure-based benefits where defensible.");
+      tips.push("Avoid relying on post-closing remediation; address material issues pre-close where possible.");
+      return tips.slice(0,5);
+    }
+
+    function computeFinal(){
+      var completed = gameHistory.length;
+      var completionPct = completed / scenes.length;
+
+      var weightedValue = value * 1.05;
+      var weightedRisk = risk * 1.15;
+      var completionBonus = (completed === scenes.length ? 8 : 0) + Math.round(completionPct * 10);
+
+      var raw = weightedValue - weightedRisk + completionBonus;
+      var scoreInternal = Math.round(clamp(raw, -50, 100));
+      var score100 = clamp(scoreInternal, 0, 100);
+
+      var letter = "F";
+      if (score100 >= 93) letter = "A";
+      else if (score100 >= 90) letter = "A-";
+      else if (score100 >= 87) letter = "B+";
+      else if (score100 >= 83) letter = "B";
+      else if (score100 >= 80) letter = "B-";
+      else if (score100 >= 77) letter = "C+";
+      else if (score100 >= 73) letter = "C";
+      else if (score100 >= 70) letter = "C-";
+      else if (score100 >= 67) letter = "D+";
+      else if (score100 >= 63) letter = "D";
+
+      var grade, blurb;
+      if (score100 >= 90){
+        grade = "Partner: impressed (tries not to show it)";
+        blurb = "You created meaningful value while keeping risk in check. The client might actually thank you. Don’t get used to it.";
+      } else if (score100 >= 80){
+        grade = "Partner: generally happy";
+        blurb = "Good balance. A few spots could be tighter, but you’re not donating billable hours to future disputes.";
+      } else if (score100 >= 70){
+        grade = "Partner: cautiously concerned";
+        blurb = "You got the deal done, but you left some sharp edges. Expect at least one post-closing call where everyone says “quick question.”";
+      } else if (score100 >= 60){
+        grade = "Partner: drafting a teaching email";
+        blurb = "Risk is doing too much. You need more specificity, better allocation, or some insurance.";
+      } else {
+        grade = "Partner: 'let’s chat' (ominous)";
+        blurb = "You have created a legally binding surprise. The IRS may not be involved, but chaos is.";
+      }
+
+      return {
+        score100: score100,
+        letter: letter,
+        grade: grade,
+        blurb: blurb,
+        recs: recommendations(),
+        completed: completed,
+        weightedValue: Math.round(weightedValue),
+        weightedRisk: Math.round(weightedRisk),
+        completionBonus: completionBonus
+      };
+    }
+
+    function openFinal(){
+      var res = computeFinal();
+      els.finalScore.textContent = res.score100 + "/100";
+      els.finalDesc.textContent = res.letter + " • " + res.grade;
+      els.finalSub.textContent = DEAL.client + " is acquiring " + DEAL.target + ", " + DEAL.targetDesc + ", for " + DEAL.price + ". Completed " + res.completed + "/" + scenes.length + " stages.";
+
+      els.finalBreakdown.innerHTML =
+        '<div style="margin-top:10px;"><b>Score components</b></div>' +
+        '<div style="margin-top:8px; font-family: var(--mono); font-size:12px; color:#cfe1ff; line-height:1.55;">' +
+        'value=' + value + ' (weighted ≈ ' + res.weightedValue + ')<br>' +
+        'risk=' + risk + ' (weighted ≈ ' + res.weightedRisk + ')<br>' +
+        'completion bonus=' + res.completionBonus +
+        '</div>' +
+        '<div style="margin-top:12px;"><b>Next time:</b></div>' +
+        '<ul style="margin:8px 0 0 18px; color:#dbe5ff; font-size:12.5px; line-height:1.45;">' +
+        res.recs.map(function(t){ return "<li>" + t + "</li>"; }).join("") +
+        "</ul>";
+
+      els.finalReview.innerHTML =
+        "<b>" + res.blurb + "</b>" +
+        '<div style="margin-top:10px; color: var(--muted); font-size:12.5px;">Note: tax issues often have cross-cutting effects across covenants, price mechanics, and indemnities.</div>' +
+        '<div style="margin-top:12px;"><b>Summary text:</b><br><span style="color:#cfe1ff;">This interactive simulation models common transactional tax decision points and forces tradeoffs between value creation and tax risk allocation using a transparent scoring model.</span></div>';
+
+      els.modal.classList.add("show");
+      els.copyNote.style.display = "none";
+    }
+
+    function closeModal(){ els.modal.classList.remove("show"); }
+    function restart(){ document.getElementById("splash").style.display = "block"; document.getElementById("app").style.display = "none"; closeModal(); }
+
+    // Buttons
+    els.btnBack.addEventListener("click", undo);
+    els.btnReset.addEventListener("click", reset);
+    els.btnFinish.addEventListener("click", openFinal);
+    els.btnClose.addEventListener("click", closeModal);
+    els.btnRestart.addEventListener("click", function(){ reset(); restart(); });
+
+    els.btnCopy.addEventListener("click", function(){
+      var res = computeFinal();
+      var summary =
+        "Tax Deal Simulator – Project Summary\n" +
+        "Deal: " + DEAL.client + " acquires " + DEAL.target + " (" + DEAL.price + ")\n" +
+        "Score: " + res.score100 + "/100 (" + res.letter + ")\n" +
+        "Partner review: " + res.grade + "\n" +
+        "Value points: " + value + "; Risk points: " + risk + "; Completed stages: " + res.completed + "/" + scenes.length + "\n\n" +
+        "Scoring model:\n" +
+        "- Value increases score (weighted)\n" +
+        "- Risk decreases score (weighted)\n" +
+        "- Completion adds a bonus\n\n" +
+        "What it demonstrates:\n" +
+        "- Transactional tax judgment under time pressure\n" +
+        "- Risk allocation tools (reps, disclosures, indemnity, insurance, covenants)\n" +
+        "- How deal mechanics impact value creation vs exposure\n";
+
+      // Clipboard: try modern API, fall back
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(summary).then(function(){
+          els.copyNote.style.display = "block";
+          setTimeout(function(){ els.copyNote.style.display="none"; }, 1400);
+        }).catch(function(){
+          alert("Clipboard blocked. Copy manually from the modal.");
+        });
+      } else {
+        alert("Clipboard not available. Copy manually from the modal.");
+      }
+    });
+
+    // Keyboard
+    window.addEventListener("keydown", function(e){
+      var key = (e.key || "").toLowerCase();
+      if (document.getElementById("app").style.display === "none"){
+        if (key === "enter" || key === "escape") startGame();
+        return;
+      }
+      if (key === "u") { undo(); return; }
+      if (els.modal.classList.contains("show")){
+        if (key === "escape") closeModal();
+        return;
+      }
+      if (e.key === "1" || e.key === "2" || e.key === "3" || e.key === "4"){
+        var i = parseInt(e.key,10)-1;
+        var s = scenes[idx];
+        if (s && s.choices[i]) pick(i);
+      }
+    });
+
+    // Click outside modal closes it
+    els.modal.addEventListener("click", function(e){
+      if (e.target === els.modal) closeModal();
+    });
+  </script>
+</body>
+</html>
